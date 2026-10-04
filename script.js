@@ -1,50 +1,42 @@
-const menuToggle = document.querySelector('.menu-toggle');
+const menuButton = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.main-nav');
 
-menuToggle?.addEventListener('click', () => {
-  const open = menuToggle.classList.toggle('open');
-  nav.classList.toggle('open', open);
-  menuToggle.setAttribute('aria-expanded', String(open));
-  document.body.style.overflow = open ? 'hidden' : '';
-});
-
-document.querySelectorAll('.main-nav a').forEach((link) => {
-  link.addEventListener('click', () => {
-    menuToggle?.classList.remove('open');
-    nav?.classList.remove('open');
-    menuToggle?.setAttribute('aria-expanded', 'false');
-    document.body.style.overflow = '';
+if (menuButton && nav) {
+  menuButton.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    document.body.classList.toggle('menu-open', open);
+    menuButton.setAttribute('aria-expanded', String(open));
   });
-});
 
-const observer = new IntersectionObserver((entries) => {
+  nav.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      nav.classList.remove('open');
+      document.body.classList.remove('menu-open');
+      menuButton.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
+
+const progressBar = document.getElementById('progressBar');
+const updateProgress = () => {
+  if (!progressBar) return;
+  const doc = document.documentElement;
+  const distance = doc.scrollHeight - doc.clientHeight;
+  const progress = distance > 0 ? (doc.scrollTop / distance) * 100 : 0;
+  progressBar.style.width = `${progress}%`;
+};
+window.addEventListener('scroll', updateProgress, { passive: true });
+updateProgress();
+
+const revealObserver = new IntersectionObserver((entries, observer) => {
   entries.forEach((entry) => {
-    if (!entry.isIntersecting) return;
-    const delay = Number(entry.target.dataset.delay || 0);
-    window.setTimeout(() => entry.target.classList.add('visible'), delay);
-    observer.unobserve(entry.target);
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
+    }
   });
-}, { threshold: 0.12 });
+}, { threshold: 0.12, rootMargin: '0px 0px -5% 0px' });
 
-document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
 
 document.getElementById('year').textContent = new Date().getFullYear();
-
-const progress = document.getElementById('progressBar');
-window.addEventListener('scroll', () => {
-  const total = document.documentElement.scrollHeight - window.innerHeight;
-  const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
-  progress.style.width = `${pct}%`;
-}, { passive: true });
-
-const copyButton = document.getElementById('copyEmail');
-copyButton?.addEventListener('click', async () => {
-  const email = 'contact@chukeluemmanuel.com';
-  try {
-    await navigator.clipboard.writeText(email);
-    copyButton.textContent = 'Copied';
-    window.setTimeout(() => (copyButton.textContent = 'Copy email'), 1800);
-  } catch {
-    window.location.href = `mailto:${email}`;
-  }
-});
